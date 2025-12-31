@@ -13,7 +13,7 @@ local window = library:AddWindow("👑Victory👑 - Welcome "..displayname, {
 
 
 local Killer = window:AddTab("👑Kill Them All")
-KillerTab:Show()
+KillerTab:show()
 
 local antiKnockbackSwitch = KillerTab:AddSwitch("Anti Knockback", function(bool)
     local player = game.Players.LocalPlayer
