@@ -1,7 +1,7 @@
-local library =
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 
-    local displayname = game.Players.LocalPlayer.DisplayName
+local displayname = game:GetService("Players").LocalPlayer.DisplayName
+
 
 local window = library:AddWindow("👑Victory👑 - Welcome "..displayname, {
     main_color = Color3.fromRGB(106, 0, 255),
