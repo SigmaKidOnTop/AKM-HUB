@@ -1,211 +1,255 @@
---// CONFIG
-local KEY = "KTA.2026"
-local THEME = {
-    Accent = Color3.fromRGB(110, 0, 255),
-    Accent2 = Color3.fromRGB(0, 162, 255),
-    Background = Color3.fromRGB(18, 20, 36),
-    Panel = Color3.fromRGB(26, 28, 48),
-    Text = Color3.fromRGB(230, 230, 255)
-}
+local KTA = {}
 
-local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
-
+local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 
---================================================--
---                UTILS
---================================================--
-local function tween(obj, t, props)
-    TweenService:Create(obj, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+local THEME = {
+	Accent  = Color3.fromRGB(110, 0, 255),
+	Accent2 = Color3.fromRGB(0, 162, 255),
+	Background = Color3.fromRGB(18,20,36),
+	Panel = Color3.fromRGB(28,30,48),
+	Text = Color3.fromRGB(235,235,255)
+}
+
+local function tween(o,t,p)
+	TweenService:Create(o,TweenInfo.new(t,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
 end
 
---================================================--
---            KEY SYSTEM SCREEN
---================================================--
-local KeyGui = Instance.new("ScreenGui", game.CoreGui)
-KeyGui.ResetOnSpawn = false
+--========================================================
+--  PUBLIC
+--========================================================
+function KTA:Create(cfg)
+	cfg = cfg or {}
+	cfg.Key = cfg.Key or "KTA.2026"
+	cfg.Title = cfg.Title or "KTA Panel"
 
-local Frame = Instance.new("Frame", KeyGui)
-Frame.Size = UDim2.fromScale(0.28, 0.24)
-Frame.Position = UDim2.fromScale(0.36, 0.35)
-Frame.BackgroundColor3 = THEME.Panel
-Frame.ClipsDescendants = true
-Frame.Active = true
-Frame.Draggable = true
-Frame.BackgroundTransparency = 0.08
+	local self = {}
+	self.Tabs = {}
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0,16)
+	--====================================================
+	-- KEY SCREEN
+	--====================================================
+	local gui = Instance.new("ScreenGui")
+	gui.ResetOnSpawn = false
+	gui.IgnoreGuiInset = true
+	gui.Parent = plr:WaitForChild("PlayerGui")
 
-local Glow = Instance.new("UIStroke", Frame)
-Glow.Thickness = 2
-Glow.Color = THEME.Accent
+	local keyframe = Instance.new("Frame",gui)
+	keyframe.Size = UDim2.fromScale(.3,.23)
+	keyframe.Position = UDim2.fromScale(.35,.38)
+	keyframe.BackgroundColor3 = THEME.Panel
+	keyframe.ClipsDescendants = true
+	keyframe.Active = true
+	keyframe.Draggable = true
+	Instance.new("UICorner",keyframe).CornerRadius = UDim.new(0,16)
 
-local Title = Instance.new("TextLabel", Frame)
-Title.Text = "Enter Access Key"
-Title.Size = UDim2.fromScale(1,0.28)
-Title.BackgroundTransparency = 1
-Title.TextColor3 = THEME.Text
-Title.Font = Enum.Font.GothamBold
-Title.TextScaled = true
+	local stroke = Instance.new("UIStroke",keyframe)
+	stroke.Color = THEME.Accent
+	stroke.Thickness = 2
 
-local Box = Instance.new("TextBox", Frame)
-Box.PlaceholderText = "Type here"
-Box.Text = ""
-Box.Size = UDim2.fromScale(0.85,0.28)
-Box.Position = UDim2.fromScale(0.075,0.38)
-Box.BackgroundColor3 = THEME.Background
-Box.TextColor3 = THEME.Text
-Box.Font = Enum.Font.Gotham
-Box.TextScaled = true
-Instance.new("UICorner",Box).CornerRadius = UDim.new(0,10)
+	local title = Instance.new("TextLabel",keyframe)
+	title.Size = UDim2.fromScale(1,.28)
+	title.BackgroundTransparency = 1
+	title.Text = "Enter Access Key"
+	title.Font = Enum.Font.GothamBold
+	title.TextColor3 = THEME.Text
+	title.TextScaled = true
 
-local Button = Instance.new("TextButton", Frame)
-Button.Text = "Continue"
-Button.Size = UDim2.fromScale(0.6,0.25)
-Button.Position = UDim2.fromScale(0.2,0.72)
-Button.BackgroundColor3 = THEME.Accent
-Button.TextColor3 = Color3.new(1,1,1)
-Button.Font = Enum.Font.GothamBold
-Button.TextScaled = true
-Instance.new("UICorner",Button).CornerRadius = UDim.new(0,10)
+	local box = Instance.new("TextBox",keyframe)
+	box.Size = UDim2.fromScale(.85,.27)
+	box.Position = UDim2.fromScale(.075,.4)
+	box.PlaceholderText = "Type here"
+	box.Text = ""
+	box.BackgroundColor3 = THEME.Background
+	box.TextColor3 = THEME.Text
+	box.Font = Enum.Font.Gotham
+	box.TextScaled = true
+	Instance.new("UICorner",box).CornerRadius = UDim.new(0,10)
 
--- Startup animation
-Frame.Size = UDim2.fromScale(0,0)
-tween(Frame,0.4,{Size=UDim2.fromScale(0.28,0.24)})
+	local go = Instance.new("TextButton",keyframe)
+	go.Size = UDim2.fromScale(.55,.23)
+	go.Position = UDim2.fromScale(.23,.73)
+	go.Text = "Continue"
+	go.Font = Enum.Font.GothamBold
+	go.TextScaled = true
+	go.TextColor3 = Color3.new(1,1,1)
+	go.BackgroundColor3 = THEME.Accent
+	Instance.new("UICorner",go).CornerRadius = UDim.new(0,10)
 
---================================================--
---            MAIN UI (LOCKED)
---================================================--
-local MainGui = Instance.new("ScreenGui", game.CoreGui)
-MainGui.Enabled = false
+	-- LOADER BAR
+	local loadbar = Instance.new("Frame",keyframe)
+	loadbar.Size = UDim2.fromScale(0,.05)
+	loadbar.Position = UDim2.fromScale(.075,.9)
+	loadbar.BackgroundColor3 = THEME.Accent2
+	loadbar.Visible = false
+	Instance.new("UICorner",loadbar)
 
-local Main = Instance.new("Frame", MainGui)
-Main.Size = UDim2.fromScale(0.45,0.45)
-Main.Position = UDim2.fromScale(0.28,0.22)
-Main.BackgroundColor3 = THEME.Panel
-Main.Active = true
-Main.Draggable = true
-Main.ClipsDescendants = true
-Instance.new("UICorner",Main).CornerRadius = UDim.new(0,16)
+	keyframe.Size = UDim2.fromScale(0,0)
+	tween(keyframe,.35,{Size=UDim2.fromScale(.3,.23)})
 
-local Border = Instance.new("UIStroke", Main)
-Border.Color = THEME.Accent2
-Border.Thickness = 2
+	--====================================================
+	-- MAIN UI (LOCKED)
+	--====================================================
+	local main = Instance.new("Frame",gui)
+	main.Visible = false
+	main.Size = UDim2.fromScale(.43,.45)
+	main.Position = UDim2.fromScale(.285,.24)
+	main.BackgroundColor3 = THEME.Panel
+	main.Active = true
+	main.Draggable = true
+	main.ClipsDescendants = true
+	Instance.new("UICorner",main).CornerRadius = UDim.new(0,16)
 
--- Titlebar
-local Top = Instance.new("Frame", Main)
-Top.Size = UDim2.fromScale(1,0.15)
-Top.BackgroundColor3 = THEME.Background
-Instance.new("UICorner",Top)
+	local bar = Instance.new("Frame",main)
+	bar.Size = UDim2.fromScale(1,.14)
+	bar.BackgroundColor3 = THEME.Background
+	Instance.new("UICorner",bar)
 
-local Title2 = Instance.new("TextLabel", Top)
-Title2.Text = "KTA Panel"
-Title2.Size = UDim2.fromScale(0.7,1)
-Title2.BackgroundTransparency = 1
-Title2.TextXAlignment = Enum.TextXAlignment.Left
-Title2.Position = UDim2.fromScale(0.05,0)
-Title2.Font = Enum.Font.GothamBold
-Title2.TextScaled = true
-Title2.TextColor3 = THEME.Text
+	local head = Instance.new("TextLabel",bar)
+	head.Text = cfg.Title
+	head.Size = UDim2.fromScale(.7,1)
+	head.BackgroundTransparency = 1
+	head.Position = UDim2.fromScale(.05,0)
+	head.Font = Enum.Font.GothamBold
+	head.TextScaled = true
+	head.TextXAlignment = Enum.TextXAlignment.Left
+	head.TextColor3 = THEME.Text
 
--- Minimize Button
-local Min = Instance.new("TextButton", Top)
-Min.Text = "-"
-Min.Size = UDim2.fromScale(0.12,0.7)
-Min.Position = UDim2.fromScale(0.83,0.15)
-Min.BackgroundColor3 = THEME.Accent
-Instance.new("UICorner",Min)
-Min.TextScaled = true
-Min.Font = Enum.Font.GothamBold
-Min.TextColor3 = Color3.new(1,1,1)
+	local min = Instance.new("TextButton",bar)
+	min.Text = "-"
+	min.Size = UDim2.fromScale(.12,.72)
+	min.Position = UDim2.fromScale(.83,.14)
+	min.BackgroundColor3 = THEME.Accent
+	Instance.new("UICorner",min)
+	min.Font = Enum.Font.GothamBold
+	min.TextScaled = true
+	min.TextColor3 = Color3.new(1,1,1)
 
---================================================--
---           LOGO (WHEN MINIMIZED)
---================================================--
-local Logo = Instance.new("Frame", MainGui)
-Logo.Visible = false
-Logo.Size = UDim2.fromScale(0.055,0.1)
-Logo.Position = UDim2.fromScale(0.03,0.85)
-Logo.BackgroundColor3 = THEME.Panel
-Logo.Active = true
-Logo.Selectable = true
-Instance.new("UICorner",Logo).CornerRadius = UDim.new(1,0)
+	local tabs = Instance.new("Frame",main)
+	tabs.Size = UDim2.fromScale(.25,.86)
+	tabs.Position = UDim2.fromScale(0,.14)
+	tabs.BackgroundColor3 = THEME.Background
+	Instance.new("UICorner",tabs)
 
-local LText = Instance.new("TextLabel", Logo)
-LText.Text = "KTA"
-LText.BackgroundTransparency = 1
-LText.Size = UDim2.fromScale(1,1)
-LText.Font = Enum.Font.GothamBlack
-LText.TextScaled = true
-LText.TextColor3 = THEME.Accent2
+	local content = Instance.new("Frame",main)
+	content.Size = UDim2.fromScale(.75,.86)
+	content.Position = UDim2.fromScale(.25,.14)
+	content.BackgroundColor3 = THEME.Panel
+	Instance.new("UICorner",content)
 
-local Logog = Instance.new("UIStroke", Logo)
-Logog.Color = THEME.Accent
-Logog.Thickness = 2
+	--====================================================
+	-- MINIMIZE LOGO
+	--====================================================
+	local logo = Instance.new("Frame",gui)
+	logo.Visible = false
+	logo.Size = UDim2.fromScale(.06,.1)
+	logo.Position = UDim2.fromScale(.03,.84)
+	logo.BackgroundColor3 = THEME.Panel
+	Instance.new("UICorner",logo).CornerRadius = UDim.new(1,0)
 
---================================================--
---                 TABS EXAMPLE
---================================================--
-local Tabs = Instance.new("Frame", Main)
-Tabs.Size = UDim2.fromScale(0.25,0.85)
-Tabs.Position = UDim2.fromScale(0,0.15)
-Tabs.BackgroundColor3 = THEME.Background
-Instance.new("UICorner",Tabs)
+	local lg = Instance.new("TextLabel",logo)
+	lg.Text = "KTA"
+	lg.Size = UDim2.fromScale(1,1)
+	lg.BackgroundTransparency = 1
+	lg.TextScaled = true
+	lg.Font = Enum.Font.GothamBlack
+	lg.TextColor3 = THEME.Accent2
 
-local Content = Instance.new("Frame", Main)
-Content.Size = UDim2.fromScale(0.75,0.85)
-Content.Position = UDim2.fromScale(0.25,0.15)
-Content.BackgroundColor3 = THEME.Panel
-Instance.new("UICorner",Content)
+	local minimized = false
+	local function minimize()
+		minimized = true
+		tween(main,.25,{Size=UDim2.fromScale(0,0),Transparency=1})
+		task.wait(.25)
+		main.Visible = false
+		logo.Visible = true
+	end
+	local function restore()
+		minimized = false
+		logo.Visible = false
+		main.Visible = true
+		main.Size = UDim2.fromScale(0,0)
+		tween(main,.25,{Size=UDim2.fromScale(.43,.45),Transparency=0})
+	end
 
---================================================--
---           MINIMIZE / RESTORE ANIMATION
---================================================--
-local minimized = false
+	min.MouseButton1Click:Connect(function()
+		if minimized then restore() else minimize() end
+	end)
 
-local function minimize()
-    minimized = true
-    tween(Main,0.25,{Size=UDim2.fromScale(0,0),Transparency=1})
-    task.wait(0.25)
-    Main.Visible = false
-    Logo.Visible = true
-    tween(Logo,0.25,{Size=UDim2.fromScale(0.055,0.1)})
+	logo.InputBegan:Connect(function(i)
+		if i.UserInputType==Enum.UserInputType.MouseButton1 then
+			if minimized then restore() end
+		end
+	end)
+
+	--====================================================
+	-- KEY VALIDATION + LOADER
+	--====================================================
+	go.MouseButton1Click:Connect(function()
+		if box.Text ~= cfg.Key then
+			tween(box,.1,{BackgroundColor3=Color3.fromRGB(120,0,0)})
+			task.wait(.15)
+			tween(box,.15,{BackgroundColor3=THEME.Background})
+			return
+		end
+
+		loadbar.Visible = true
+		tween(loadbar,.7,{Size=UDim2.fromScale(.85,.05)})
+		task.wait(.75)
+
+		tween(keyframe,.3,{Size=UDim2.fromScale(0,0)})
+		task.wait(.28)
+		keyframe:Destroy()
+
+		restore()
+	end)
+
+	--====================================================
+	-- SIMPLE TAB API
+	--====================================================
+	function self:AddTab(name)
+		local btn = Instance.new("TextButton",tabs)
+		btn.Text = name
+		btn.Size = UDim2.fromScale(1,0.12)
+		btn.BackgroundTransparency = .1
+		btn.BackgroundColor3 = THEME.Panel
+		btn.Font = Enum.Font.Gotham
+		btn.TextScaled = true
+		btn.TextColor3 = THEME.Text
+		Instance.new("UICorner",btn).CornerRadius = UDim.new(0,10)
+
+		local page = Instance.new("Frame",content)
+		page.Size = UDim2.fromScale(1,1)
+		page.BackgroundTransparency = 1
+		page.Visible = false
+
+		btn.MouseButton1Click:Connect(function()
+			for _,v in ipairs(content:GetChildren()) do
+				if v:IsA("Frame") then v.Visible=false end
+			end
+			page.Visible = true
+		end)
+
+		local api = {}
+		function api:AddLabel(text)
+			local l = Instance.new("TextLabel",page)
+			l.Text = text
+			l.Size = UDim2.fromScale(.9,.12)
+			l.Position = UDim2.fromScale(.05,.05)
+			l.BackgroundTransparency = 1
+			l.TextScaled = true
+			l.Font = Enum.Font.GothamSemibold
+			l.TextColor3 = THEME.Text
+			return l
+		end
+
+		page.Visible = (#self.Tabs==0)
+		table.insert(self.Tabs,api)
+		return api
+	end
+
+	return self
 end
 
-local function restore()
-    minimized = false
-    Logo.Visible = false
-    Main.Visible = true
-    Main.Size = UDim2.fromScale(0,0)
-    tween(Main,0.25,{Size=UDim2.fromScale(0.45,0.45),Transparency=0})
-end
-
-Min.MouseButton1Click:Connect(function()
-    if minimized then restore() else minimize() end
-end)
-
-Logo.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        restore()
-    end
-end)
-
---================================================--
---              KEY VALIDATION
---================================================--
-Button.MouseButton1Click:Connect(function()
-    if Box.Text == KEY then
-        tween(Frame,0.35,{Size=UDim2.fromScale(0,0)})
-        task.wait(0.35)
-        KeyGui:Destroy()
-        MainGui.Enabled = true
-        restore()
-    else
-        tween(Box,0.1,{BackgroundColor3=Color3.fromRGB(120,0,0)})
-        task.wait(0.12)
-        tween(Box,0.2,{BackgroundColor3=THEME.Background})
-    end
-end)
+return KTA
